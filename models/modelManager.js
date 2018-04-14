@@ -1,5 +1,6 @@
 const User = require('./User');
 const Organization = require('./Organization');
+const Team = require('./Team');
 
 module.exports = {
   createModel: (model, properties) => {
@@ -13,6 +14,11 @@ module.exports = {
         return {
           query: "name: $name",
           model: new Organization(properties)
+        };
+      case 'Team':
+        return {
+          query: "name: $name",
+          model: new Team(properties)
         };
     }
   },

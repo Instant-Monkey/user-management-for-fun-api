@@ -6,6 +6,7 @@ var config = require('./config.js')
 
 var users = require('./routes/users');
 var organizations = require('./routes/organizations');
+var teams = require('./routes/teams');
 
 
 var app = express();
@@ -20,6 +21,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/users', users);
 app.use('/organizations', organizations);
+app.use('/teams', teams);
 
 app.use(function(req, res, next) {
   var err = new Error('Not Found');

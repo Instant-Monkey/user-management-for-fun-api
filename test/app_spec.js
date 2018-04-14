@@ -147,3 +147,69 @@ describe('Organization', () => {
     });
 
 });
+
+describe('Team', () => {
+    var dummyId;
+    beforeEach(done => {
+      const reset = neo4j.resetLabel('Team');
+      const newTeam = neo4j.createNode('Team', {
+        name: 'Red',
+      });
+
+      Promise.all([reset,newTeam]).then(data => {
+        dummyId = helpers.getNodeField(data[1]).identity.low;
+        done();
+      });
+    });
+
+    it('should add a SINGLE Team on teams/new POST', (done) => {
+      chai.request(server)
+        .post('/teams/new')
+        .send({
+          name: 'Blue',
+        })
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.labels[0].should.equal('Team');
+          res.body.properties.should.have.property('name');
+          res.body.properties.name.should.equal('Blue');
+          done();
+        });
+    });
+
+    it('should get a SINGLE Team on teams/:id GET', (done) => {
+      chai.request(server)
+        .get(`/teams/${dummyId}`)
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.labels[0].should.equal('Team');
+          res.body.properties.should.have.property('name');
+          res.body.properties.name.should.equal('Red');
+          done();
+        });
+    });
+
+    it('should get many Team on teams GET', (done) => {
+      const newTeam = neo4j.createNode('Team', {
+        name: 'Blue',
+      });
+
+      newTeam.then(data => {
+        chai.request(server)
+          .get(`/teams/`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('array');
+            res.body[0].labels[0].should.equal('Team');
+            res.body[0].properties.name.should.equal('Red');
+            res.body[1].labels[0].should.equal('Team');
+            res.body[1].properties.name.should.equal('Blue');
+            done();
+          });
+      });
+    });
+
+});
