@@ -29,4 +29,21 @@ router.get('/:id', (req, res) => {
   ).catch(err => res.json({error: err}));
 });
 
+router.post('/:id/addUser', (req, res) => {
+  const properties = req.body;
+  const newRel = neo4j.createRelationship(properties.userId,req.params.id, 'BELONGS_TO');
+  newRel.then(data => {
+    res.json(helpers.getNodeField(data));
+  }
+).catch(err => res.json({error: err}));
+});
+
+router.get('/:id/users', (req, res) => {
+  const users = neo4j.getIngoingNodes(req.params.id);
+  users.then(data => {
+    res.json(helpers.getNodeArray(data.records));
+  }
+  ).catch(err => res.json({error: err}));
+});
+
 module.exports = router;

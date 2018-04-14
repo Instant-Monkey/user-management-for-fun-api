@@ -51,7 +51,46 @@ module.exports = {
     });
     return resultPromise;
   },
-  // for tests 
+  getOutgoingNodes: (id) => {
+    const session = driver.session();
+    const resultPromise = session.run(
+      `MATCH(n)-->(related)
+      WHERE id(n) = ${id}
+      RETURN related
+      `
+    );
+    resultPromise.then(result => {
+      session.close();
+    });
+    return resultPromise;
+  },
+  getIngoingNodes: (id) => {
+    const session = driver.session();
+    const resultPromise = session.run(
+      `MATCH(n)<--(related)
+      WHERE id(n) = ${id}
+      RETURN related
+      `
+    );
+    resultPromise.then(result => {
+      session.close();
+    });
+    return resultPromise;
+  },
+  createRelationship: (source, target, REL_TYPE) => {
+    const session = driver.session();
+    const resultPromise = session.run(
+      `MATCH (a),(b)
+      WHERE id(a) = ${source} AND id(b) = ${target}
+      CREATE (a)-[r:${REL_TYPE}]->(b)
+      RETURN r`
+    );
+    resultPromise.then(result => {
+      session.close();
+    });
+    return resultPromise;
+  },
+  // for tests
   resetLabel: (label) => {
     const session = driver.session();
     const resultPromise = session.run(`MATCH (n:${label}) DETACH DELETE n`);

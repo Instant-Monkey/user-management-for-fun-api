@@ -11,7 +11,7 @@ chai.use(chaiHttp);
 
 describe('User', () => {
     var dummyId;
-    beforeEach(done => {
+    before(done => {
       const newUser = neo4j.createNode('User', {
         name: 'Test User',
         email: 'test_user@gmail.com'
@@ -65,9 +65,7 @@ describe('User', () => {
           res.should.be.json;
           res.body.should.be.a('array');
           res.body[0].labels[0].should.equal('User');
-          res.body[0].properties.email.should.equal('test_user@gmail.com');
           res.body[1].labels[0].should.equal('User');
-          res.body[1].properties.email.should.equal('slaugier@gmail.com');
           done();
         });
     });
@@ -81,7 +79,7 @@ describe('User', () => {
 
 describe('Organization', () => {
     var dummyId;
-    beforeEach(done => {
+    before(done => {
       const newOrganization = neo4j.createNode('Organization', {
         name: 'Yutani',
       });
@@ -129,9 +127,7 @@ describe('Organization', () => {
           res.should.be.json;
           res.body.should.be.a('array');
           res.body[0].labels[0].should.equal('Organization');
-          res.body[0].properties.name.should.equal('Yutani');
           res.body[1].labels[0].should.equal('Organization');
-          res.body[1].properties.name.should.equal('Weyland');
           done();
         });
     });
@@ -144,7 +140,7 @@ describe('Organization', () => {
 
 describe('Team', () => {
     var dummyId;
-    beforeEach(done => {
+    before(done => {
       const newTeam = neo4j.createNode('Team', {
         name: 'Red',
       });
@@ -192,9 +188,7 @@ describe('Team', () => {
           res.should.be.json;
           res.body.should.be.a('array');
           res.body[0].labels[0].should.equal('Team');
-          res.body[0].properties.name.should.equal('Red');
           res.body[1].labels[0].should.equal('Team');
-          res.body[1].properties.name.should.equal('Blue');
           done();
         });
     });
@@ -207,20 +201,101 @@ describe('Team', () => {
 });
 
 describe('Relations', () => {
-  var dummyId;
-  beforeEach(done => {
-  done();
+  var userId;
+  var teamId;
+  var orgaId;
+  before(done => {
+    const newUser = neo4j.createNode('User', {
+      name: 'Test User',
+      email: 'test_user@gmail.com'
+    });
+    const newTeam = neo4j.createNode('Team', {
+      name: 'Red',
+    });
+    const newOrganization = neo4j.createNode('Organization', {
+      name: 'Yutani',
+    });
+
+    Promise.all([newUser,newTeam,newOrganization]).then(data => {
+      userId = helpers.getNodeField(data[0]).identity.low;
+      teamId = helpers.getNodeField(data[1]).identity.low;
+      orgaId = helpers.getNodeField(data[2]).identity.low;
+      done();
+    });
+
   });
-  it('should add a user to an organization on organizations/addUser/:id POST', done => {
-    done();
+
+  it('should add a user to an organization on organizations/:id/addUser POST', done => {
+    chai.request(server)
+      .post(`/organizations/${orgaId}/addUser`)
+      .send({
+        userId,
+      })
+      .end((err, res) => {
+        res.should.have.status(200);
+        res.should.be.json;
+        res.body.start.low.should.equal(userId);
+        res.body.end.low.should.equal(orgaId);
+        res.body.type.should.equal('BELONGS_TO');
+        done();
+      });
+
   })
-  it('should add a user to a team on teams/addUser/:id POST', done => {
-    done();
+  it('should add a user to a team on teams/:id/addUser POST', done => {
+    chai.request(server)
+      .post(`/teams/${teamId}/addUser`)
+      .send({
+        userId,
+      })
+      .end((err, res) => {
+        res.should.have.status(200);
+        res.should.be.json;
+        res.body.start.low.should.equal(userId);
+        res.body.end.low.should.equal(teamId);
+        res.body.type.should.equal('BELONGS_TO');
+        done();
+      });
   })
-  it('should list the users of an organization on organization/:id/users GET', done => {
-    done();
+  it('should list the users of an organization on organizations/:id/users GET', done => {
+    chai.request(server)
+      .get(`/organizations/${orgaId}/users`)
+      .end((err, res) => {
+        res.should.have.status(200);
+        res.should.be.json;
+        res.body.should.be.a('array');
+        res.body[0].labels[0].should.equal('User');
+        res.body[0].properties.name.should.equal('Test User');
+        done();
+      });
   })
   it('should list the users of a team on team/:id/users GET', done => {
-    done();
+    chai.request(server)
+      .get(`/teams/${teamId}/users`)
+      .end((err, res) => {
+        res.should.have.status(200);
+        res.should.be.json;
+        res.body.should.be.a('array');
+        res.body[0].labels[0].should.equal('User');
+        res.body[0].properties.name.should.equal('Test User');
+        done();
+      });
+  })
+
+  it('should list the teams and organisations of a user on users/:id/groups GET', done => {
+    chai.request(server)
+      .get(`/users/${userId}/groups`)
+      .end((err, res) => {
+        res.should.have.status(200);
+        res.should.be.json;
+        res.body.should.be.a('array');
+        done();
+      });
+  })
+
+  after(done => {
+    const resetUsers = neo4j.resetLabel('User');
+    const resetOrgas = neo4j.resetLabel('Organization');
+    const resetTeams = neo4j.resetLabel('Team');
+    Promise.all([resetUsers,resetOrgas,resetTeams]).then(() => done());
   })
 })

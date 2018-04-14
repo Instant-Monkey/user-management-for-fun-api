@@ -29,4 +29,12 @@ router.get('/:id', (req, res) => {
   ).catch(err => res.json({error: err}));
 });
 
+router.get('/:id/groups', (req, res) => {
+  const users = neo4j.getOutgoingNodes(req.params.id);
+  users.then(data => {
+    res.json(helpers.getNodeArray(data.records));
+  }
+  ).catch(err => res.json({error: err}));
+});
+
 module.exports = router;
