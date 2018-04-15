@@ -90,6 +90,19 @@ module.exports = {
     });
     return resultPromise;
   },
+
+  deleteRelationship: (source, target, REL_TYPE) => {
+    const session = driver.session();
+    const resultPromise = session.run(
+      `MATCH (a)-[r:${REL_TYPE}]->(b)
+      WHERE id(a) = ${source} AND id(b) = ${target}
+      DELETE r`
+    );
+    resultPromise.then(result => {
+      session.close();
+    });
+    return resultPromise;
+  },
   // for tests
   resetLabel: (label) => {
     const session = driver.session();

@@ -41,7 +41,8 @@ router.post('/:id/addUser', (req, res) => {
 router.get('/:id/users', (req, res) => {
   const users = neo4j.getIngoingNodes(req.params.id);
   users.then(data => {
-    res.json(helpers.getNodeArray(data.records));
+    results = helpers.getNodeArray(data.records);
+    res.json(results.length > 0 ? results : new Array);
   }
   ).catch(err => res.json({error: err}));
 });

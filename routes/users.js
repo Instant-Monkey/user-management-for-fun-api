@@ -15,6 +15,7 @@ router.get('/', (req, res) => {
 router.post('/new', (req, res) => {
   const properties = req.body;
   const newUser = neo4j.createNode('User', properties);
+  console.log(properties);
   newUser.then(data => {
     res.json(helpers.getNodeField(data));
   }
@@ -32,7 +33,8 @@ router.get('/:id', (req, res) => {
 router.get('/:id/groups', (req, res) => {
   const users = neo4j.getOutgoingNodes(req.params.id);
   users.then(data => {
-    res.json(helpers.getNodeArray(data.records));
+    results = helpers.getNodeArray(data.records);
+    res.json(results.length > 0 ? results : new Array);
   }
   ).catch(err => res.json({error: err}));
 });

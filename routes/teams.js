@@ -38,10 +38,20 @@ router.post('/:id/addUser', (req, res) => {
 ).catch(err => res.json({error: err}));
 });
 
+router.post('/:id/removeUser', (req, res) => {
+  const properties = req.body;
+  const newRel = neo4j.deleteRelationship(properties.userId,req.params.id, 'BELONGS_TO');
+  newRel.then(data => {
+    res.json(helpers.getNodeField(data));
+  }
+).catch(err => res.json({error: err}));
+});
+
 router.get('/:id/users', (req, res) => {
   const users = neo4j.getIngoingNodes(req.params.id);
   users.then(data => {
-    res.json(helpers.getNodeArray(data.records));
+    results = helpers.getNodeArray(data.records);
+    res.json(results.length > 0 ? results : new Array);
   }
   ).catch(err => res.json({error: err}));
 });
